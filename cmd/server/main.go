@@ -7,11 +7,15 @@ import (
 
 	"food-delivery-order/internal/config"
 
+	"food-delivery-order/internal/database"
+
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	cfg := config.LoadConfig()
+
+	database.Connect(cfg)
 
 	router := gin.Default()
 
