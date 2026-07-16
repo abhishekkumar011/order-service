@@ -6,24 +6,21 @@ import (
 	"fmt"
 
 	"food-delivery-order/internal/config"
-
 	"food-delivery-order/internal/database"
+	"food-delivery-order/internal/routes"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
+
 	cfg := config.LoadConfig()
 
 	database.Connect(cfg)
 
 	router := gin.Default()
 
-	router.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "Server Running",
-		})
-	})
+	routes.RegisterRoutes(router)
 
 	fmt.Println("Running on port", cfg.Port)
 
