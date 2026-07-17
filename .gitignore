@@ -31,3 +31,5 @@ go.work.sum
 
 # Windows
 Thumbs.db
+
+node_modules
