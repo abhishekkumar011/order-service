@@ -4,6 +4,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"food-delivery-order/internal/database"
@@ -15,7 +16,7 @@ import (
 
 type OrderService struct{}
 
-func (s *OrderService) ProcessEvent(event models.Event) error {
+func (s *OrderService) ProcessEvent(event models.Event) (string, error) {
 
 	switch event.Type {
 
@@ -23,22 +24,26 @@ func (s *OrderService) ProcessEvent(event models.Event) error {
 		return s.createOrder(event)
 
 	case "order.update.status":
-		return s.updateStatus(event)
+		return "", s.updateStatus(event)
 
 	case "order.update.items":
-		return s.updateItems(event)
+		return "", s.updateItems(event)
 
+	default:
+		return "", fmt.Errorf("unknown event type: %s", event.Type)
 	}
 
-	return nil
 }
 
-func (s *OrderService) createOrder(event models.Event) error {
+func (s *OrderService) createOrder(event models.Event) (string, error) {
+
+	orderID := "ORD-" + uuid.New().String()
+
 	order := models.Order{
-		OrderID:      uuid.New().String(),
+		OrderID:      orderID,
 		CustomerID:   event.CustomerID,
 		RestaurantID: event.RestaurantID,
-		Status:       "Pending",
+		Status:       "Received",
 		Items:        event.Items,
 		LastUpdated:  time.Now(),
 	}
@@ -48,7 +53,11 @@ func (s *OrderService) createOrder(event models.Event) error {
 		order,
 	)
 
-	return err
+	if err != nil {
+		return "", err
+	}
+
+	return orderID, nil
 }
 
 func (s *OrderService) updateStatus(event models.Event) error {
@@ -126,14 +135,14 @@ func (s *OrderService) GetOrders() ([]models.Order, error) {
 
 	4. ([]models.Order, error) - Returns two Values 1. list of orders 2. error
 	    - bson.M{} inside M we can define filter based on that we can fetch documents
-		  - but {} means no filter it tells MongoDB Give me every document in this collection.  
-	
+		  - but {} means no filter it tells MongoDB Give me every document in this collection.
+
 	5. cursor, err := database.OrderCollection.Find(
 		context.Background(),
 		bson.M{},
 	)
 		- Think of a cursor as a bookmark or iterator.
-		- When you run this func you will get cursor instead of orders[] 
+		- When you run this func you will get cursor instead of orders[]
 		- Find() in go does not return the actual orders it returns a cursor.
 		  - cursor - A pointer that lets you read the matching documents.
 		  	- Go gives you something like this:
@@ -142,6 +151,6 @@ func (s *OrderService) GetOrders() ([]models.Order, error) {
               Currently pointing at Page 1
 			  - The cursor knows where the results are, but it hasn't copied them into Go memory yet.
 
-		- Cusort.All() - Because now we want to read everything the cursor found. Convert cursor into an array of orders	  
+		- Cusort.All() - Because now we want to read everything the cursor found. Convert cursor into an array of orders
 		               - This means: Cursor read all the documents you're pointing to and copy them into this slice(order array).
 */

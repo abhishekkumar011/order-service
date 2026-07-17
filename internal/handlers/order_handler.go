@@ -31,7 +31,7 @@ func (h *OrderHandler) HandleEvent(c *gin.Context) {
 		return
 	}
 
-	err := h.Service.ProcessEvent(event)
+	orderID, err := h.Service.ProcessEvent(event)
 
 	if err != nil {
 
@@ -42,9 +42,15 @@ func (h *OrderHandler) HandleEvent(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	response := gin.H{
 		"message": "Event processed successfully",
-	})
+	}
+
+	if event.Type == "order.create" {
+		response["orderId"] = orderID
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 func (h *OrderHandler) GetOrders(c *gin.Context) {
